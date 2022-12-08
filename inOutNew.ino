@@ -249,13 +249,15 @@ void loop() {
   int motionStatusOfInside = digitalRead(PIR_2);
   int inOrOut = 0; // 들어옴 : 1 , 나감 : 2
 
+  if (Serial.available()) {
+    currentWeather = Serial.parseInt();
+  }
+  
   if (motionStatusOfDoorside == 1 || motionStatusOfInside == 1) {
     digitalWrite(LED_1, HIGH);
   }
 
-  if (Serial.available()) {
-    currentWeather = Serial.parseInt();
-  }
+
 
   if (motionStatusOfDoorside == 1 && motionStatusOfInside == 0) {
     Serial.println("나감");
