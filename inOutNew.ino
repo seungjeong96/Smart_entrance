@@ -10,10 +10,13 @@ WiFiUDP Udp;
 int freq = 2000; // PWM 주파수 설정(2000Hz)
 int channel = 0; // PWM 채널 설정(0~15)
 int resolution = 8; // PWM duty cycle resolution(해상도) 설정, 8bit=0~255
-
+int currentWeather = 0; //1:맑음, 2:흐림, 3:비, 4:눈
 unsigned int localUdpPort = 3456; //사용할 UDP 포트 번호 지정
-char RecievedMessage[255]; //수신할 메시지를 저장할 배열 공간 선언
+char ReceivedMessage[255]; //수신할 메시지를 저장할 배열 공간 선언
 char Acknowledge[] = "Received OK";
+
+int insideTemp;
+int insideHumi;
 
 Adafruit_IS31FL3731 matrix = Adafruit_IS31FL3731();
 static const uint8_t PROGMEM
@@ -85,10 +88,35 @@ snow_bmp[] = {
   B10101000
 };
 
+
+static const uint8_t PROGMEM
+smile_bmp[] = {
+  B00000000,
+  B01100110,
+  B01100110,
+  B00000000,
+  B01000010,
+  B01100110,
+  B00111100,
+  B00000000
+};
+
+static const uint8_t PROGMEM
+angry_bmp[] = {
+  B00000000,
+  B01100110,
+  B01100110,
+  B00000000,
+  B00111100,
+  B01100110,
+  B01000010,
+  B00000000
+};
+
 void setup() {
-  pinMode(15, INPUT); //D1
-  pinMode(26, INPUT); //D2
-  pinMode(32, OUTPUT); //D3
+  pinMode(15, INPUT); //D1 1번 PIR
+  pinMode(26, INPUT); //D2 2번 PIR
+  pinMode(32, OUTPUT); //D3 LED 조명
 
   ledcSetup(channel, freq, resolution); // PWM 채널, 주파수, 해상도 설정(ledcSetup)
   ledcAttachPin(25, channel); // 설정한 PWM 채널의 출력을 어떤 핀(25)으로 내보낼 지 지정
@@ -121,15 +149,15 @@ void setup() {
 
 
 
+
 }
 
 int weatherLEDmatrix(int status) {
 
-
-
   matrix.setRotation(0); // 디스플레이 위치 값
   matrix.clear(); // LED Matirx 화면 초기화
   // matrix.drawBitmap(float x(x좌표값), float y(y좌표값), text, int width(가로행), int height(세로열), brightness(밝기))
+
   if (status == 1) { //맑음
     matrix.drawBitmap(float(0), float(0), sunny_bmp, 8, 9, 100);
     // 형식을 맞춰주기 위해 float()사용, 가로 행에는 LED Matrix의 가로 LED 해상도를, 세로 열에는 세로 해상도를 입력
@@ -137,7 +165,7 @@ int weatherLEDmatrix(int status) {
   if (status == 2) { //흐림
     matrix.drawBitmap(float(0), float(0), cloudy_bmp, 8, 9, 100);
   }
-  if (status == 3) { //비 or 우산
+  if (status == 3) { //비 or 우산 or 태풍
 
     for (int displayCount = 0; displayCount < 5; displayCount++) {
       matrix.drawBitmap(float(0), float(0), rainy_bmp, 8, 9, 100);
@@ -146,7 +174,6 @@ int weatherLEDmatrix(int status) {
       matrix.drawBitmap(float(0), float(0), umbrella_bmp, 8, 9, 100);
       delay(2000);
     }
-
   }
 }
 
@@ -189,6 +216,12 @@ void welcomeSound() {
   delay(200);
 }
 
+int insideTempAndHumi(int temp, int humi){
+  int calc;
+  calc = 0.81*temp+0.01*humi*(0.99*temp-14.3)+46.3;
+  return calc;
+}
+
 void loop() {
 
   int motionStatusOfDoorside = digitalRead(15);
@@ -196,27 +229,30 @@ void loop() {
   int inOrOut = 0; // 들어옴 : 1 , 나감 : 2
   int doorsideTime = 0;
   int insideTime = 0;
-  int currentWeather = 0; //1:맑음, 2:흐림, 3:비, 4:눈
 
   if (motionStatusOfDoorside == 1 || motionStatusOfInside == 1) {
     digitalWrite(32, HIGH);
 
   }
-  
+
   if (Serial.available()) {
     currentWeather = Serial.parseInt();
   }
+
+
+
+
   if (motionStatusOfDoorside == 1 && motionStatusOfInside == 0) {
 
 
     Serial.println("나감");
     Serial.println("오늘의 날씨는");
 
-    if (currentWeather == 1) { //우산이 필요없는 경우
-      nonUmbrellaSound();
-    }
-    if (currentWeather == 2) { //우산이 필요한 경우
+    if (currentWeather == 3 || currentWeather == 4) { //우산이 필요한 경우
       umbrellaSound();
+    }
+    else { //우산이 필요없는 경우
+      nonUmbrellaSound();
     }
     weatherLEDmatrix(currentWeather);
     delay(10000);
@@ -227,15 +263,28 @@ void loop() {
     Serial.println("들어옴");
     welcomeSound();
 
-    //    Udp.flush(); //버퍼 클리어
-    //    Serial.print("parse :");
-    //    Serial.println(Udp.parsePacket()); //수신된 데이터를 번역
-    //    Udp.read(RecievedMessage, 255); // 버퍼에 있는 데이터를 읽어들임
-    //    //udp read의 반환값 :TRUE FALSE
-    //    //근데 read 반환값을 프린트에 넣어버림
-    //    Serial.println("현재 실내 온도는");
-    //    Serial.println(RecievedMessage); //번역된 메시지를 출력
+    Udp.flush(); //버퍼 클리어
+    Serial.print("parse :");
+    Serial.println(Udp.parsePacket()); //수신된 데이터를 번역
+    Udp.read(ReceivedMessage, 255); // 버퍼에 있는 데이터를 읽어들임
+    //udp read의 반환값 :TRUE FALSE
+    //근데 read 반환값을 프린트에 넣어버림
+
+
+
+    Serial.println("현재 실내 온도는");
+    Serial.println(ReceivedMessage); //번역된 메시지를 출력
+
+    char THI = ReceivedMessage[0];
+    if(THI ='1'){
+      matrix.drawBitmap(float(0), float(0), angry_bmp, 8, 9, 100);
+    }
+    else{
+      matrix.drawBitmap(float(0), float(0), smile_bmp, 8, 9, 100);
+    }
+    
     delay(10000);
+    
     motionStatusOfInside == 0;
   }
 
