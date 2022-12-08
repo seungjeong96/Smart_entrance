@@ -75,7 +75,6 @@ umbrella_bmp[] = {
   B00101000,
   B00111000
 };
-
 static const uint8_t PROGMEM
 snow_bmp[] = {
   B00111100,
@@ -87,8 +86,6 @@ snow_bmp[] = {
   B00000000,
   B10101000
 };
-
-
 static const uint8_t PROGMEM
 smile_bmp[] = {
   B00000000,
@@ -100,7 +97,6 @@ smile_bmp[] = {
   B00111100,
   B00000000
 };
-
 static const uint8_t PROGMEM
 angry_bmp[] = {
   B00000000,
@@ -131,25 +127,21 @@ void setup() {
   Serial.begin(115200);
 
 
-  //  Serial.println();
-  //  Serial.print("Connecting to ");
-  //  Serial.println(ssid);
-  //  WiFi.begin(ssid, password);
-  //  while (WiFi.status() != WL_CONNECTED) { //와이파이가 연결될때 까지
-  //    delay(500);
-  //    Serial.print(".");
-  //  }
-  //  Serial.println("");
-  //  Serial.println("WiFi connected.");
-  //  Serial.println("IP address: ");
-  //  Serial.println(WiFi.localIP()); //와이파이 연결 시 IP 주소 출력
-  //  Udp.begin(localUdpPort); //해당 포트 번호의 UDP 인스턴스 Initialize
-  //  Serial.printf("I am listening at IP %s, UDP port %d \n", WiFi.localIP().toString().c_str(), localUdpPort);
-  //  //현재 연결된 와이파이 IP 주소 및 UDP 포트 출력
-
-
-
-
+   Serial.println();
+   Serial.print("Connecting to ");
+   Serial.println(ssid);
+   WiFi.begin(ssid, password);
+   while (WiFi.status() != WL_CONNECTED) { //와이파이가 연결될때 까지
+     delay(500);
+     Serial.print(".");
+   }
+   Serial.println("");
+   Serial.println("WiFi connected.");
+   Serial.println("IP address: ");
+   Serial.println(WiFi.localIP()); //와이파이 연결 시 IP 주소 출력
+   Udp.begin(localUdpPort); //해당 포트 번호의 UDP 인스턴스 Initialize
+   Serial.printf("I am listening at IP %s, UDP port %d \n", WiFi.localIP().toString().c_str(), localUdpPort);
+   //현재 연결된 와이파이 IP 주소 및 UDP 포트 출력
 }
 
 int weatherLEDmatrix(int status) {
@@ -174,6 +166,18 @@ int weatherLEDmatrix(int status) {
       matrix.drawBitmap(float(0), float(0), umbrella_bmp, 8, 9, 100);
       delay(2000);
     }
+  }
+  if(status == 4){//눈
+      for (int displayCount = 0; displayCount < 5; displayCount++) {
+      matrix.drawBitmap(float(0), float(0), snow_bmp, 8, 9, 100);
+      delay(2000);
+      matrix.clear();
+      matrix.drawBitmap(float(0), float(0), umbrella_bmp, 8, 9, 100);
+      delay(2000);
+    }
+  }
+  else{
+  matrix.drawBitmap(float(0), float(0), sunny_bmp, 8, 9, 100);
   }
 }
 
@@ -230,20 +234,15 @@ void loop() {
   int doorsideTime = 0;
   int insideTime = 0;
 
-  if (motionStatusOfDoorside == 1 || motionStatusOfInside == 1) {
-    digitalWrite(32, HIGH);
-
-  }
-
   if (Serial.available()) {
     currentWeather = Serial.parseInt();
   }
 
-
-
+  if (motionStatusOfDoorside == 1 || motionStatusOfInside == 1) {
+    digitalWrite(32, HIGH);
+  }
 
   if (motionStatusOfDoorside == 1 && motionStatusOfInside == 0) {
-
 
     Serial.println("나감");
     Serial.println("오늘의 날씨는");
