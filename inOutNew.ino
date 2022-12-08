@@ -263,7 +263,7 @@ void loop() {
     Serial.println("들어옴");
     welcomeSound();
 
-    Udp.flush(); //버퍼 클리어
+    Udp.flush(); //버퍼 clear
     Serial.print("parse :");
     Serial.println(Udp.parsePacket()); //수신된 데이터를 번역
     Udp.read(ReceivedMessage, 255); // 버퍼에 있는 데이터를 읽어들임
