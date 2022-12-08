@@ -1,3 +1,8 @@
+#define PIR_1 15
+#define PIR_2 26
+#define LED_1 32
+#define Buzzer 2
+
 #include <Adafruit_GFX.h>
 #include <Adafruit_IS31FL3731.h>
 #include <WiFi.h>
@@ -110,16 +115,17 @@ angry_bmp[] = {
 };
 
 void setup() {
-  pinMode(15, INPUT); //D1 1번 PIR
-  pinMode(26, INPUT); //D2 2번 PIR
-  pinMode(32, OUTPUT); //D3 LED 조명
+  pinMode(PIR_1, INPUT); //D1 1번 PIR
+  pinMode(PIR_2, INPUT); //D2 2번 PIR
+  pinMode(LED_1, OUTPUT); //D3 LED 조명
 
   ledcSetup(channel, freq, resolution); // PWM 채널, 주파수, 해상도 설정(ledcSetup)
   ledcAttachPin(25, channel); // 설정한 PWM 채널의 출력을 어떤 핀(25)으로 내보낼 지 지정
-  pinMode(2, OUTPUT); // 2번 핀을 출력핀으로 지정하고 0V로 구동되도록 각 pin에 LOW 값 지정
+  pinMode(Buzzer, OUTPUT); // 2번 핀을 출력핀으로 지정하고 0V로 구동되도록 각 pin에 LOW 값 지정
   //pinMode(25, OUTPUT); // 부저 전원인가를 위한 GPIO 제어핀 제어
   //2번만 전원, 25는 단순 핀 연결 : 핀 지정 필요 X
-  digitalWrite(2, LOW); // 부저 전원 ON
+  digitalWrite(Buzzer, LOW); // 부저 전원 ON
+
 
 
   matrix.begin(); // I2C주소값 선언, begin(uint8_t addr = ISSI_ADDR_DEFAULT); I2c버스로 해당 드라이버를 사용할 수 있도록 준비함
@@ -127,22 +133,27 @@ void setup() {
   Serial.begin(115200);
 
 
-   Serial.println();
-   Serial.print("Connecting to ");
-   Serial.println(ssid);
-   WiFi.begin(ssid, password);
-   while (WiFi.status() != WL_CONNECTED) { //와이파이가 연결될때 까지
-     delay(500);
-     Serial.print(".");
-   }
-   Serial.println("");
-   Serial.println("WiFi connected.");
-   Serial.println("IP address: ");
-   Serial.println(WiFi.localIP()); //와이파이 연결 시 IP 주소 출력
-   Udp.begin(localUdpPort); //해당 포트 번호의 UDP 인스턴스 Initialize
-   Serial.printf("I am listening at IP %s, UDP port %d \n", WiFi.localIP().toString().c_str(), localUdpPort);
-   //현재 연결된 와이파이 IP 주소 및 UDP 포트 출력
+  //  Serial.println();
+  //  Serial.print("Connecting to ");
+  //  Serial.println(ssid);
+  //  WiFi.begin(ssid, password);
+  //  while (WiFi.status() != WL_CONNECTED) { //와이파이가 연결될때 까지
+  //    delay(500);
+  //    Serial.print(".");
+  //  }
+  //  Serial.println("");
+  //  Serial.println("WiFi connected.");
+  //  Serial.println("IP address: ");
+  //  Serial.println(WiFi.localIP()); //와이파이 연결 시 IP 주소 출력
+  //  Udp.begin(localUdpPort); //해당 포트 번호의 UDP 인스턴스 Initialize
+  //  Serial.printf("I am listening at IP %s, UDP port %d \n", WiFi.localIP().toString().c_str(), localUdpPort);
+  //  //현재 연결된 와이파이 IP 주소 및 UDP 포트 출력
+
+
+
+
 }
+
 
 int weatherLEDmatrix(int status) {
 
@@ -166,7 +177,7 @@ int weatherLEDmatrix(int status) {
       matrix.drawBitmap(float(0), float(0), umbrella_bmp, 8, 9, 100);
       delay(2000);
     }
-  }
+  }  
   if(status == 4){//눈
       for (int displayCount = 0; displayCount < 5; displayCount++) {
       matrix.drawBitmap(float(0), float(0), snow_bmp, 8, 9, 100);
@@ -182,6 +193,7 @@ int weatherLEDmatrix(int status) {
 }
 
 void umbrellaSound() {
+  digitalWrite(Buzzer, HIGH);
   ledcWriteTone(channel, 261);
   delay(100);
   ledcWriteTone(channel, 261);
@@ -190,9 +202,11 @@ void umbrellaSound() {
   delay(100);
   ledcWriteTone(channel, 392);
   delay(200);
+  digitalWrite(Buzzer, LOW);
 }
 
 void nonUmbrellaSound() {
+  digitalWrite(Buzzer, HIGH);
   ledcWriteTone(channel, 392);
   delay(200);
   ledcWriteTone(channel, 329);
@@ -205,9 +219,11 @@ void nonUmbrellaSound() {
   delay(200);
   ledcWriteTone(channel, 523);
   delay(200);
+  digitalWrite(Buzzer, LOW);
 }
 
 void welcomeSound() {
+  digitalWrite(Buzzer, HIGH);
   ledcWriteTone(channel, 261); // 부저의 PWM 주파수 기준 값, C(도) 261.6256
   delay(200);
   ledcWriteTone(channel, 329);
@@ -218,6 +234,7 @@ void welcomeSound() {
   delay(200);
   ledcWriteTone(channel, 523);
   delay(200);
+  digitalWrite(Buzzer, LOW);
 }
 
 int insideTempAndHumi(int temp, int humi){
@@ -228,22 +245,19 @@ int insideTempAndHumi(int temp, int humi){
 
 void loop() {
 
-  int motionStatusOfDoorside = digitalRead(15);
-  int motionStatusOfInside = digitalRead(26);
+  int motionStatusOfDoorside = digitalRead(PIR_1);
+  int motionStatusOfInside = digitalRead(PIR_2);
   int inOrOut = 0; // 들어옴 : 1 , 나감 : 2
-  int doorsideTime = 0;
-  int insideTime = 0;
+
+  if (motionStatusOfDoorside == 1 || motionStatusOfInside == 1) {
+    digitalWrite(LED_1, HIGH);
+  }
 
   if (Serial.available()) {
     currentWeather = Serial.parseInt();
   }
 
-  if (motionStatusOfDoorside == 1 || motionStatusOfInside == 1) {
-    digitalWrite(32, HIGH);
-  }
-
   if (motionStatusOfDoorside == 1 && motionStatusOfInside == 0) {
-
     Serial.println("나감");
     Serial.println("오늘의 날씨는");
 
@@ -257,8 +271,7 @@ void loop() {
     delay(10000);
     motionStatusOfDoorside == 0;
   }
-
-  else if (motionStatusOfDoorside == 0 && motionStatusOfInside == 1) {
+else if (motionStatusOfDoorside == 0 && motionStatusOfInside == 1) {
     Serial.println("들어옴");
     welcomeSound();
 
@@ -268,8 +281,6 @@ void loop() {
     Udp.read(ReceivedMessage, 255); // 버퍼에 있는 데이터를 읽어들임
     //udp read의 반환값 :TRUE FALSE
     //근데 read 반환값을 프린트에 넣어버림
-
-
 
     Serial.println("현재 실내 온도는");
     Serial.println(ReceivedMessage); //번역된 메시지를 출력
@@ -287,9 +298,10 @@ void loop() {
     motionStatusOfInside == 0;
   }
 
+
   else {
     Serial.println("출입 없음");
-    digitalWrite(32, LOW);
+    digitalWrite(LED_1, LOW);
     matrix.clear();
   }
 
