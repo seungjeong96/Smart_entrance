@@ -5,7 +5,7 @@
 const char* ssid = "Ajou Univ";
 const char* password = "";
 
-#define serverIP "172.20.10.8"
+#define serverIP "10.168.36.41"
 #define udpPort 3456
 
 BME280 myBME280;
@@ -53,6 +53,7 @@ void loop() {
   // Serial.print("Button Status: ");
   int THI = insideTempAndHumi(temp,humi);
   Serial.println(insideTempHumi);// 버튼 상태 출력 후
+  Serial.println(THI);
   udp.print(THI); // 상대 UDP Instance에게 ASCII 데이터 Write
   udp.endPacket(); //데이터 전송 성공시 1 리턴
 
