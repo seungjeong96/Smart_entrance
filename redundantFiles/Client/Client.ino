@@ -267,7 +267,6 @@ void loop() {
     Serial.println(Udp.parsePacket()); //수신된 데이터를 번역
     Udp.read(ReceivedMessage, 255); // 버퍼에 있는 데이터를 읽어들임
     //udp read의 반환값 :TRUE FALSE
-    //근데 read 반환값을 프린트에 넣어버림
 
     Serial.println("현재 실내 온도는");
     Serial.println(ReceivedMessage); //번역된 메시지를 출력
