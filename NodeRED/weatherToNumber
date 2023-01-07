@@ -1,0 +1,17 @@
+var weatherData = msg.payload.weather;
+var stringWeatherData = weatherData.toString();
+var returnData = {};
+//
+if (weatherData == "Clear") {
+  returnData.payload = 1;
+} else if (weatherData == "Clouds") {
+  returnData.payload = 2;
+} else if (weatherData == "Rain" || weatherData == "Thunderstorm") {
+  returnData.payload = 3;
+} else if (weatherData == "Snow") {
+  returnData.payload = 4;
+} else {
+  returnData.payload = 9;
+}
+
+return returnData;
