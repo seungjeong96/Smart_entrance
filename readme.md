@@ -1,17 +1,31 @@
 # Smart Entrance System
 
-## 1. 개요
+## Description
 
 ESP32를 이용한 스마트 현관 시스템 프로젝트로, 사용자가 입출입 여부를 확인하여, 외출시 현재 지역의 날씨와 우산 필요 여부를, 반대로 사용자가 집으로 들어오는 경우 실내의 불쾌지수를 표시한다.
 
-## 2. 구현 도구
+## Prerequisite
+
+1. Arduino IDE
+
+- Adafruit_GFX.h
+- Adafruit_IS31FL3731.h
+- DHT.h
+
+2. Node-RED
+
+- node-red-dashboard
+- node-red-node-serialport
+- node-red-node-openweathermap
+
+## Devices
 
 1. Kepler ESP-A (ESP32 included)
 2. Kepler ESP-A I/O Cube Extension
 3. PIR Sensor Module \* 2
 4. LED Module
 5. CdS Brightness Sensor Module
-6. Temperature / Humidity Sensor Module
+6. Temperature / Humidity Sensor Module (dht 11)
 
 ## 3. 타겟 시뮬레이션
 
