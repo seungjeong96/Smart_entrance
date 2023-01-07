@@ -1,0 +1,15 @@
+msg.weather = msg.payload.weather;
+msg.location = msg.payload.location;
+msg.temperature = msg.payload.tempc;
+msg.humidity = msg.payload.humidity;
+
+if (
+  msg.weather == "Rain" ||
+  msg.weather == "Thunderstorm" ||
+  msg.weather == "Drizzle" ||
+  msg.weather == "Snow"
+) {
+  msg.message = "우산을 꼭 챙겨가세요!";
+}
+
+return msg;
